@@ -1,0 +1,34 @@
+name: CI Deploy
+on:
+  push:
+    branches: [ main ]
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Package lambda
+        run: |
+          cd lambda
+          pip install -r requirements.txt -t package
+          cp lambda_function.py package/
+          cd package
+          zip -r ../cost-optimizer.zip .
+          mv ../cost-optimizer.zip ../..
+      - name: Move zip to terraform dir
+        run: mv lambda/cost-optimizer.zip terraform/lambda-archive/cost-optimizer.zip
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Terraform Init & Apply
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          cd terraform
+          terraform init -input=false
+          terraform apply -auto-approve -input=false
