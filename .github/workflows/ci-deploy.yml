@@ -13,14 +13,12 @@ jobs:
           python-version: '3.11'
       - name: Package lambda
          run: |
+    mkdir -p terraform/lambda-archive
     cd lambda
     pip install -r requirements.txt -t package
     cp lambda_function.py package/
     cd package
     zip -r ../../terraform/lambda-archive/cost-optimizer.zip .
-
-      - name: Move zip to terraform dir
-        run: mv lambda/cost-optimizer.zip terraform/lambda-archive/cost-optimizer.zip
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
       - name: Terraform Init & Apply
