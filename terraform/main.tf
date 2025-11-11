@@ -22,54 +22,12 @@ resource "aws_iam_role" "lambda_role" {
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
-resource "aws_iam_policy" "lambda_policy" {
-  name = "${var.project_name}-policy"
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "ec2:DescribeVolumes",
-          "ec2:DeleteVolume",
-          "ec2:DescribeSnapshots",
-          "ec2:DeleteSnapshot",
-          "ec2:DescribeImages",
-          "ec2:DeregisterImage"
-        ],
-        Effect = "Allow",
-        Resource = "*"
-      },
-      {
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ],
-        Effect = "Allow",
-        Resource = "arn:aws:logs:*:*:*"
-      },
-      {
-        Action = ["sns:Publish"],
-        Effect = "Allow",
-        Resource = aws_sns_topic.alerts.arn
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "attach" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = aws_iam_policy.lambda_policy.arn
-}
-
 resource "aws_lambda_function" "optimizer" {
-  filename         = "${path.module}/lambda-archive/cost-optimizer.zip"
-  function_name    = "${var.project_name}-optimizer"
-  role             = aws_iam_role.lambda_role.arn
-  handler          = "lambda_function.lambda_handler"
-  runtime          = "python3.11"
-  memory_size      = 512
-  timeout          = 300
+  filename      = "${path.module}/lambda-archive/cost-optimizer.zip"
+  function_name = "${var.project_name}-optimizer"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.11"
 
   environment {
     variables = {
